@@ -35,6 +35,7 @@ import javax.mail.*;
 import javax.mail.internet.MimeMessage;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -179,16 +180,22 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
 
             // 9. 将填充后的文档保存到临时文件
             context.getLogger().log("将填充后的文档保存到临时文件。");
-            java.io.File tempFile = java.io.File.createTempFile("filled_document", ".docx");
+            java.io.File tempFile = java.io.File.createTempFile("filled_document_", ".docx"); // 修改为固定前缀，避免使用config.getFileName()导致的UUID问题
             try (FileOutputStream out = new FileOutputStream(tempFile)) {
                 document.write(out);
             }
             context.getLogger().log("临时文件已创建: " + tempFile.getAbsolutePath());
 
-            // 10. 生成输出文件键（可根据需要调整，例如使用邮件文件名）
-            String outputKey = OUTPUT_KEY_PREFIX + UUID.randomUUID().toString() + ".docx";
+            // 10. 定义期望的上传文件名（不包含UUID）
+            String desiredFileName = config.getFileName() + ".docx"; // 使用配置中的文件名
 
-            // 11. 上传填充后的文档回输出桶
+            // 12. 上传文件到Google Drive
+            context.getLogger().log(uploadGoogleDrive(tempFile, config.getGoogleFolderId(), desiredFileName)); // 传递期望的文件名
+
+            // 11. 生成输出文件键（可根据需要调整，例如使用邮件文件名）
+            String outputKey = OUTPUT_KEY_PREFIX + config.getFileName() + ".docx"; // 修改为使用期望的文件名
+
+            // 13. 上传填充后的文档回输出桶
             context.getLogger().log("上传填充后的文档回S3。桶名: " + OUTPUT_BUCKET_NAME + ", 文件键: " + outputKey);
             s3Client.putObject(PutObjectRequest.builder()
                             .bucket(OUTPUT_BUCKET_NAME)
@@ -197,8 +204,6 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
                     RequestBody.fromFile(tempFile));
             context.getLogger().log("成功上传填充后的文档到S3。");
 
-            // 12. 上传文件到Google Drive
-            context.getLogger().log(uploadGoogleDrive(tempFile));
 
             // 删除临时文件
             if (tempFile.delete()) {
@@ -320,23 +325,9 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
         context.getLogger().log("第一次调用OpenAI API的提示内容: " + prompt);
         String generatedContent = callOpenAI(prompt, context, null);
         context.getLogger().log("第一次从OpenAI获取的生成内容: " + generatedContent);
+        
 
         String[] paragraphs = generatedContent.split("\n");  // 每个部分由换行符分隔
-
-        // A类型文档特殊处理
-        if (documentType.toString().equals("TYPE_A")){
-            String prompt2 = "现在我需要你模拟我已经做完了这个活动，并且分别给我回答以下四个问题：1. Record what happened； 2. Evaluate and analyse what the children learnt (link to EYLF Learning Outcomes and indicators)； 3. Suggested future learning ideas； 4:Reflect on your delivery of the provision, effectiveness of resources, transitions, teaching strategies, questioning. Think about the skills & strategies you need to focus on improving. 在你的回复里，要以第一人称老师的口吻 回复英文，不要重复描述问题，每个答案前面要带题号，除了答案，不要写多余的话。";
-            String generatedContent2 = callOpenAI(prompt2, context, generatedContent);
-            context.getLogger().log("第二次从OpenAI获取的生成内容: " + generatedContent2);
-            String[] paragraphs2 = generatedContent.split("\n");  // 每个部分由换行符分隔
-
-            // 追加第两次请求的答案数组
-            paragraphs = Stream.concat(Arrays.stream(paragraphs), Arrays.stream(paragraphs2))
-                    .toArray(String[]::new);
-
-            context.getLogger().log("合并两次回复内容的字符串数组: " + Arrays.toString(paragraphs));
-        }
-
 
 
         // 分割生成内容为列表
@@ -445,14 +436,20 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
     }
 
     /**
-     * 上传文件到Google Drive的指定文件夹。
+     * 上传文件到Google Drive的指定文件夹，按照当天日期创建子文件夹（如果不存在）。
      *
-     * @param tempFile 要上传的文件
-     * @return 上传文件的ID
+     * @param tempFile        要上传的文件
+     * @param googleDriveFolderId Google Drive目标文件夹ID
+     * @param desiredFileName 期望的文件名（不包含UUID）
+     * @return 上传文件的ID或错误信息
      */
-    public String uploadGoogleDrive(java.io.File tempFile) {
+    public String uploadGoogleDrive(java.io.File tempFile, String googleDriveFolderId, String desiredFileName) { // 增加 desiredFileName 参数
         try {
-            InputStream credentialsStream = new ByteArrayInputStream(credentialsJson.getBytes(StandardCharsets.UTF_8));
+            // 获取当前日期，格式为 "yyyy-MM-dd"
+            String currentDate = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+
+            // 初始化Google Drive服务
+            InputStream credentialsStream = new ByteArrayInputStream(System.getenv("GOOGLE_CREDENTIALS").getBytes(StandardCharsets.UTF_8));
 
             GoogleCredential credential = GoogleCredential.fromStream(credentialsStream)
                     .createScoped(Collections.singletonList("https://www.googleapis.com/auth/drive.file"));
@@ -461,11 +458,18 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
                     .setApplicationName("Google Drive API Java Lambda")
                     .build();
 
+            // 获取或创建当天日期的文件夹
+            String dateFolderId = getOrCreateDateFolder(driveService, currentDate, googleDriveFolderId);
+
+            if (dateFolderId == null) {
+                return "Error: Unable to create or retrieve the date folder.";
+            }
+
             // 文件元数据
             File fileMetadata = new File();
-            fileMetadata.setName(tempFile.getName());
-            // 这里设置Google Drive的目标文件夹ID
-            fileMetadata.setParents(Collections.singletonList(folderId));
+            fileMetadata.setName(desiredFileName); // 使用期望的文件名
+            // 设置Google Drive的目标文件夹ID
+            fileMetadata.setParents(Collections.singletonList(dateFolderId));
 
             // 准备文件内容
             FileContent mediaContent = new FileContent("application/vnd.openxmlformats-officedocument.wordprocessingml.document", tempFile);
@@ -481,4 +485,46 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
             return "Error during file upload: " + e.getMessage();
         }
     }
+
+    /**
+     * 获取指定名称的文件夹ID，如果不存在则创建一个新的文件夹。
+     *
+     * @param driveService  Google Drive服务实例
+     * @param folderName    要获取或创建的文件夹名称
+     * @param parentFolderId 父文件夹的ID
+     * @return 文件夹的ID，如果创建或获取失败则返回null
+     */
+    private String getOrCreateDateFolder(Drive driveService, String folderName, String parentFolderId) {
+        try {
+            // 查询是否存在同名文件夹
+            String query = "mimeType = 'application/vnd.google-apps.folder' and name = '" + folderName + "' and '" + parentFolderId + "' in parents and trashed = false";
+            Drive.Files.List request = driveService.files().list()
+                    .setQ(query)
+                    .setSpaces("drive")
+                    .setFields("files(id, name)");
+
+            List<File> folders = request.execute().getFiles();
+
+            if (folders != null && !folders.isEmpty()) {
+                // 文件夹已存在，返回其ID
+                return folders.get(0).getId();
+            } else {
+                // 文件夹不存在，创建一个新的文件夹
+                File fileMetadata = new File();
+                fileMetadata.setName(folderName);
+                fileMetadata.setMimeType("application/vnd.google-apps.folder");
+                fileMetadata.setParents(Collections.singletonList(parentFolderId));
+
+                File folder = driveService.files().create(fileMetadata)
+                        .setFields("id")
+                        .execute();
+
+                return folder.getId();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
 }

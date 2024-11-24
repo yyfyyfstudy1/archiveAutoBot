@@ -99,6 +99,14 @@
             <version>1.9</version> <!-- 检查是否有更新的版本 -->
         </dependency>
 
+        <!-- AWS SDK for SES -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-ses</artifactId>
+            <version>1.12.553</version>
+        </dependency>
+
+
     </dependencies>
 
     <build>

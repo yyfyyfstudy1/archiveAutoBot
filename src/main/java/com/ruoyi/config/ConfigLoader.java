@@ -44,7 +44,10 @@ public class ConfigLoader {
                 String templateBucket = configNode.get("templateBucket").asText();
                 String templateKey = configNode.get("templateKey").asText();
                 String prompt = configNode.get("prompt").asText();
-                DocumentConfig config = new DocumentConfig(templateBucket, templateKey, prompt);
+                String googleFolderId = configNode.get("googleFolderId").asText();
+                String fileName = configNode.get("fileName").asText();
+
+                DocumentConfig config = new DocumentConfig(templateBucket, templateKey, prompt, googleFolderId, fileName);
                 configMap.put(type, config);
             }
         }
