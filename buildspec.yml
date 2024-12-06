@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      java: corretto11
+      java: corretto17
       maven: 3.6
     commands:
       - echo "Maven 和 Java 已经预装"
