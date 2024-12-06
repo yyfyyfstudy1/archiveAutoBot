@@ -4,24 +4,24 @@ phases:
   install:
     runtime-versions:
       java: corretto11
+      maven: 3.6
     commands:
-      - echo Installing Maven...
-      - yum update -y
-      - yum install -y maven
+      - echo "Maven 和 Java 已经预装"
   pre_build:
     commands:
-      - echo Pre-build阶段...
+      - echo "Pre-build 阶段..."
   build:
     commands:
-      - echo 构建项目...
+      - echo "构建项目..."
       - mvn clean package
   post_build:
     commands:
-      - echo 构建完成，准备打包部署...
+      - echo "构建完成，准备打包部署..."
       - mkdir -p deployment
       - cp target/lambda-deployment.jar deployment/
       - cd deployment
       - zip function.zip lambda-deployment.jar
+
 artifacts:
   files:
     - deployment/function.zip
