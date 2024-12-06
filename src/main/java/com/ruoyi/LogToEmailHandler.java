@@ -118,7 +118,7 @@ public class LogToEmailHandler implements RequestHandler<CloudWatchLogsEvent, St
             context.getLogger().log("Logs have been sent via email.");
             context.getLogger().log("CICD测试222");
             context.getLogger().log("CICD测试222");
-            context.getLogger().log("CICD测试222");
+            context.getLogger().log("CICD测试333");
             context.getLogger().log("CICD测试222");
             context.getLogger().log("CICD测试222");
             context.getLogger().log("CICD测试222");
