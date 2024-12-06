@@ -1,0 +1,25 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      java: corretto11
+    commands:
+      - echo Installing Maven...
+      - apt-get update
+      - apt-get install -y maven
+  pre_build:
+    commands:
+      - echo Pre-build stage: Cleaning previous builds...
+      - mvn clean
+  build:
+    commands:
+      - echo Build started on `date`
+      - mvn package
+  post_build:
+    commands:
+      - echo Build completed on `date`
+artifacts:
+  files:
+    - target/lambda-deployment.jar
+  discard-paths: yes
