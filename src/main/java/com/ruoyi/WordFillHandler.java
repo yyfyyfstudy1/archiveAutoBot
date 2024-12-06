@@ -91,7 +91,7 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
 
     @Override
     public String handleRequest(S3Event s3event, Context context) {
-        context.getLogger().log("Lambda函数开始执行。");
+        context.getLogger().log("Lambda函数开始执行九月6号更新。");
 
         // 1. 获取 S3 事件信息
         String sourceBucket = "";
