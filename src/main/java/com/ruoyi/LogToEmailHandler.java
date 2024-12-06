@@ -116,6 +116,7 @@ public class LogToEmailHandler implements RequestHandler<CloudWatchLogsEvent, St
 
             sesClient.sendEmail(request);
             context.getLogger().log("Logs have been sent via email.");
+            context.getLogger().log("CICD测试");
         } catch (Exception e) {
             context.getLogger().log("Failed to send email: " + e.getMessage());
         }
