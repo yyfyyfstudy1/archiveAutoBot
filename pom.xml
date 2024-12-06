@@ -126,6 +126,7 @@
                                     <mainClass>com.example.lambda.WordFillHandler</mainClass>
                                 </transformer>
                             </transformers>
+                            <outputFile>${project.build.directory}/lambda-deployment.jar</outputFile>
                         </configuration>
                     </execution>
                 </executions>
