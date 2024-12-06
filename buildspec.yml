@@ -10,16 +10,19 @@ phases:
       - apt-get install -y maven
   pre_build:
     commands:
-      - echo Pre-build stage: Cleaning previous builds...
-      - mvn clean
+      - echo Pre-build阶段...
   build:
     commands:
-      - echo Build started on `date`
-      - mvn package
+      - echo 构建项目...
+      - mvn clean package
   post_build:
     commands:
-      - echo Build completed on `date`
+      - echo 构建完成，准备打包部署...
+      - mkdir -p deployment
+      - cp target/lambda-deployment.jar deployment/
+      - cd deployment
+      - zip function.zip lambda-deployment.jar
 artifacts:
   files:
-    - target/lambda-deployment.jar
+    - deployment/function.zip
   discard-paths: yes
