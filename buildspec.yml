@@ -21,6 +21,9 @@ phases:
       - cp target/lambda-deployment.jar deployment/
       - cd deployment
       - zip function.zip lambda-deployment.jar
+      - echo "打包完成，开始更新 Lambda 函数代码..."
+      - aws lambda update-function-code --function-name LogToEmailHandler --zip-file fileb://function.zip
+      - echo "Lambda 函数代码已更新"
 
 artifacts:
   files:
