@@ -25,7 +25,9 @@ phases:
       - jar tf BabyFast-1.0-SNAPSHOT.jar | grep LogToEmailHandler.class
       - zip function.zip BabyFast-1.0-SNAPSHOT.jar
       - echo "打包完成，开始更新 Lambda 函数代码..."
-      - aws lambda update-function-code --function-name LogToEmailHandler --zip-file fileb://function.zip
+      - aws s3 cp function.zip s3://word-output-bucket-yyf/new_code_zip/function.zip
+      - echo "上传完成，开始更新 Lambda 函数代码..."
+      - aws lambda update-function-code --function-name LogToEmailHandler --s3-bucket word-output-bucket-yyf --s3-key new_code_zip/function.zip
       - echo "Lambda 函数代码已更新"
 
 artifacts:
