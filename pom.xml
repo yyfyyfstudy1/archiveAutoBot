@@ -119,23 +119,20 @@
                 <executions>
                     <execution>
                         <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
+                        <goals><goal>shade</goal></goals>
                         <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.ruoyi.LogToEmailHandler</mainClass>
+                                    <mainClass>com.example.lambda.WordFillHandler</mainClass>
                                 </transformer>
                             </transformers>
-                            <outputFile>${project.build.directory}/lambda-deployment.jar</outputFile>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
         </plugins>
     </build>
+
 
 
 </project>

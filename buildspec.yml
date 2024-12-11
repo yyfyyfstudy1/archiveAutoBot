@@ -19,11 +19,11 @@ phases:
       - echo "构建完成，准备打包部署..."
       - mkdir -p deployment
       - ls -l target/
-      - cp target/lambda-deployment.jar deployment/
+      - cp target/BabyFast-1.0-SNAPSHOT.jar deployment/
       - ls -l deployment/
       - cd deployment
-      - jar tf lambda-deployment.jar | grep LogToEmailHandler.class
-      - zip function.zip lambda-deployment.jar
+      - jar tf BabyFast-1.0-SNAPSHOT.jar | grep LogToEmailHandler.class
+      - zip function.zip BabyFast-1.0-SNAPSHOT.jar
       - echo "打包完成，开始更新 Lambda 函数代码..."
       - aws lambda update-function-code --function-name LogToEmailHandler --zip-file fileb://function.zip
       - echo "Lambda 函数代码已更新"
