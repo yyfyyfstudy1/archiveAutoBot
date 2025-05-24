@@ -135,13 +135,13 @@ public class WordFillHandler implements RequestHandler<S3Event, String> {
             }
 
             // 3. 确定文档类型
-            DocumentType documentType = DocumentTypeDetector.detect(emailBody);
+            DocumentType documentType = DocumentTypeDetector.detect(emailBody, configLoader.getDocumentTypes());
             if (documentType == null) {
                 context.getLogger().log("无法确定文档类型。");
                 return "无法确定文档类型。";
             }
 
-            context.getLogger().log("检测到的文档类型: " + documentType);
+            context.getLogger().log("检测到的文档类型: " + documentType.getType());
 
             // 4. 加载文档类型配置
             DocumentConfig config = configLoader.getConfig(documentType);
