@@ -1,3 +1,4 @@
-# 自动更新周报日报，摸鱼神器
-## AWS Serverless 架构
-![babyfast drawio (2)](https://github.com/user-attachments/assets/8d2b34f6-e99b-4b80-9bd3-44b30efaf1d1)
+# Automatically update weekly and daily reports, a great tool for slacking off
+## AWS Serverless Architecture
+
+<img width="1536" height="1024" alt="09fc234d-0c76-4cc8-a267-77e40aba572f" src="https://github.com/user-attachments/assets/3d7be28c-4913-438b-ae46-095edebe1d35" />
